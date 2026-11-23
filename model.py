@@ -13,10 +13,12 @@ def initialize(raw):
     wb.close()
     sheets = list(book)
     base = book['국산투입계수(Ad)']
-    codes = [str(c) for c in base[4][2:] if c is not None and str(c).isdigit() and int(str(c)) < 9000]
-    if len(codes) != 380 or len(set(codes)) != len(codes):
-        raise ValueError('이 버전은 첨부된 2023년 380부문 워크북 구조만 지원합니다.')
-    nm = {str(r[0]): str(r[1]) for r in base[6:]}
+    nm = {str(r[0]): str(r[1]) for r in base[6:] if r and r[0] is not None and r[1] is not None}
+    # 산업 열과 행 양쪽에 실제로 있는 코드만 추출한다. 9090 등 원표의 합계 열은 제외한다.
+    codes = [str(c) for c in base[4][2:] if c is not None and str(c) in nm
+             and (not str(c).isdigit() or int(str(c)) < 9000)]
+    if not codes or len(set(codes)) != len(codes):
+        raise ValueError('산업코드를 추출할 수 없거나 중복 코드가 있습니다.')
     names = [nm[c] for c in codes]
     def matrix(s):
         rows = book[s]
